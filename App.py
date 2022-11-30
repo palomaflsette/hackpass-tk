@@ -7,6 +7,18 @@ import json
 
 root = Tk()
 
+dic = {"opHack": {},
+       "dataNasc": "",
+       "PrimeirosNumCpf": "",
+       "numCel": "",
+       "numTel": "",
+       "cep": "",
+       "rg": "",
+       "numDigPass": "",
+       "numApto": "",
+       "velocExec": "",
+       "dadosImp": []}
+
 class App():
     def __init__(self):
         self.root = root
@@ -30,21 +42,22 @@ class App():
                              highlightbackground='#04404E', highlightthickness=2)
         self.frame_1.place(relx=0.02 , rely=0.02, relwidth=0.96, relheight=0.46)
         
-    # def browseFiles(self):
-    #     self.filename = filedialog.askopenfilename(initialdir="/",
-    #                                         title="Select a File",
-    #                                         filetypes=(("Text files",
-    #                                                     "*.txt*"),
-    #                                                     ("all files",
-    #                                                     "*.*")))
-    #     # Change label contents
-    #     self.label_file_explorer.configure( text=self.filename,
-    #                                         fg="#FFFFFF", bg='#0E647B')
-    #     self.label_file_explorer.place(relx=0.69, rely=0.62)
-        
-    #     # self.label_file_explorer.configure(
-    #     #     text="File Opened: " + self.filename, bg='#012C36', fg='#7F8C8D')
-    #     # self.label_file_explorer.place(relx=0.3, rely=0.6)
+    def browseFiles(self):
+        self.filename = filedialog.askopenfilename(initialdir="/",
+                                                title="Select a File",
+                                                filetypes=(("Text files",
+                                                            "*.txt*"),
+                                                            ("all files",
+                                                            "*.*")))
+        label_file_explorer = Label(self.frame_1,
+                                            text="File Explorer",
+                                            width=35, height=1,
+                                            fg="#FFFFFF", bg='#0E647B')
+        label_file_explorer.place(relx=0.70, rely=0.62)
+        # Change label contents
+        self.label_file_explorer.configure(text=self.filename,
+                                        fg="#FFFFFF", bg='#0E647B')
+        self.label_file_explorer.place(relx=0.80, rely=0.62)
 
 
     def elementos_frame_1(self):
@@ -55,36 +68,41 @@ class App():
         self.bt2 = Button(self.frame_1, text='Salvar dados', command=self.file_save)
         self.bt2.place(relx=0.55, rely=0.85, 
                       relwidth=0.13, relheight=0.12)
-        def browseFiles():
-            filename = filedialog.askopenfilename(initialdir="/",
-                                                    title="Select a File",
-                                                    filetypes=(("Text files",
-                                                                "*.txt*"),
-                                                                ("all files",
-                                                                "*.*")))
-            label_file_explorer = Label(self.frame_1,
-                                             text="File Explorer",
-                                             width=35, height=1,
-                                             fg="#FFFFFF", bg='#0E647B')
-            label_file_explorer.place(relx=0.70, rely=0.62)
-            # Change label contents
-            label_file_explorer.configure(text=filename,
-                                            fg="#FFFFFF", bg='#0E647B')
-            label_file_explorer.place(relx=0.69, rely=0.62)
-        self.bt3 = Button(self.frame_1, text='Importar', command=browseFiles)
+        # def browseFiles():
+        #     filename = filedialog.askopenfilename(initialdir="/",
+        #                                             title="Select a File",
+        #                                             filetypes=(("Text files",
+        #                                                         "*.txt*"),
+        #                                                         ("all files",
+        #                                                         "*.*")))
+        #     label_file_explorer = Label(self.frame_1,
+        #                                      text="File Explorer",
+        #                                      width=35, height=1,
+        #                                      fg="#FFFFFF", bg='#0E647B')
+        #     label_file_explorer.place(relx=0.70, rely=0.62)
+        #     # Change label contents
+        #     label_file_explorer.configure(text=filename,
+        #                                     fg="#FFFFFF", bg='#0E647B')
+        #     label_file_explorer.place(relx=0.69, rely=0.62)
+        self.bt3 = Button(self.frame_1, text='Importar', command=self.browseFiles)
         self.bt3.place(relx=0.6, rely=0.62,
                        relwidth=0.08, relheight=0.085)
         
-        
         #### Checkboxes
         self.check_dic = Checkbutton(
-            self.frame_1, text='Dict', bg='#012C36', fg='#7F8C8D')
+            self.frame_1, text='Dict',
+            variable=self.var_checkbutton_dic , onvalue=1, offvalue=0, 
+            command=self.display_input_cb,
+            bg='#012C36', fg='#7F8C8D')
         self.check_fb = Checkbutton(
-            self.frame_1, text='BF', bg='#012C36', fg='#7F8C8D')
+            self.frame_1, text='BF', variable=self.var_checkbutton_fb, 
+            onvalue=1, offvalue=0, command=self.display_input_cb, 
+            bg='#012C36', fg='#7F8C8D')
         self.check_dic.place(relx=0.55, rely=0.02,
                              relwidth=0.10, relheight=0.15)
         self.check_fb.place(relx=0.4, rely=0.02,
-                            relwidth=0.10, relheight=0.15)
+                            relwidth=0.10, relheight=0.15)    
+        
         ### Labels 
         self.lb_codigo = Label(
             self.frame_1, text='Data de nascimento:', bg='#012C36', fg='#FFFFFF')
@@ -113,6 +131,12 @@ class App():
         self.lb_codigo = Label(
             self.frame_1, text='Velocidade exec.:', bg='#012C36', fg='#FFFFFF')
         self.lb_codigo.place(relx=0.6, rely=0.5)
+        
+        self.label_file_explorer = Label(self.frame_1,
+                                    text="File Explorer",
+                                    width=35, height=1,
+                                    fg="#FFFFFF", bg='#0E647B')
+        self.label_file_explorer.place(relx=0.70, rely=0.62)
         
         ### Entries
         self.data_nasc = Entry(self.frame_1)
@@ -153,11 +177,16 @@ class App():
                         self.submit_entry_value)
         
         #label - explorador de arquivos
-        label_file_explorer = Label(self.frame_1,
-                                    text="File Explorer",
-                                    width=35, height=1,
-                                    fg="#FFFFFF", bg='#0E647B')
-        label_file_explorer.place(relx=0.70, rely=0.62)
+        # label_file_explorer = Label(self.frame_1,
+        #                             text="File Explorer",
+        #                             width=35, height=1,
+        #                             fg="#FFFFFF", bg='#0E647B')
+        # label_file_explorer.place(relx=0.70, rely=0.62)
+    var_checkbutton_fb = IntVar()
+    var_checkbutton_dic = IntVar()
+    def display_input_cb(self):
+        dic['opHack'] = {'BruteForce': self.var_checkbutton_fb.get(),
+                         'Dic': self.var_checkbutton_dic.get()}
         
     def file_save(self):
         f = filedialog.asksaveasfile(mode='w', defaultextension=".json")
@@ -166,6 +195,7 @@ class App():
         text2save = str(self.txtBox.get(1.0, END))  # starts from `1.0`, not `0.0`
         f.write(text2save)
         f.close()
+    
         
     def submit_entry_value(self):
         self.getEntry1 = self.data_nasc.get()
@@ -178,28 +208,20 @@ class App():
         self.getEntry8 = self.num_apto.get()
         self.getEntry9 = self.veloc.get()
         self.getEntry10 = self.veloc.get()
-        lista_ent_val = [self.getEntry1, self.getEntry2, 
+        lista_ent_val = [{}, self.getEntry1, self.getEntry2, 
                          self.getEntry3, self.getEntry4,
                          self.getEntry5, self.getEntry6, 
                          self.getEntry7, self.getEntry8, 
                          self.getEntry9, ['senha1', 'senha2']]
-        dic = {"dataNasc": "", 
-               "PrimeirosNumCpf": "", 
-               "numCel": "", 
-               "numTel": "", 
-               "cep": "", 
-               "rg": "", 
-               "numDigPass": "", 
-               "numApto": "", 
-               "velocExec": "", 
-               "dadosImp": []}
+        
         
         for i, (k, v) in enumerate(dic.items()):
             if type(dic[k]) is list and type(lista_ent_val[i]) is list:
                 for el in lista_ent_val[i]:
                     dic[k].append(el)
             else:
-                dic[k] = lista_ent_val[i]
+                if type(dic[k]) is str and type(lista_ent_val[i]) is str:
+                    dic[k] = lista_ent_val[i]
                 
         self.txtBox.insert(INSERT, json.dumps(dic, indent=4))
         
