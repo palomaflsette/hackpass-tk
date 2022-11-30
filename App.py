@@ -29,7 +29,6 @@ class App():
         #self.browseFiles()
         root.mainloop()
         
-        
     def tela(self):
         self.root.title("Hackpass")
         self.root.configure(background='#10161C')
@@ -68,22 +67,6 @@ class App():
         self.bt2 = Button(self.frame_1, text='Salvar dados', command=self.file_save)
         self.bt2.place(relx=0.55, rely=0.85, 
                       relwidth=0.13, relheight=0.12)
-        # def browseFiles():
-        #     filename = filedialog.askopenfilename(initialdir="/",
-        #                                             title="Select a File",
-        #                                             filetypes=(("Text files",
-        #                                                         "*.txt*"),
-        #                                                         ("all files",
-        #                                                         "*.*")))
-        #     label_file_explorer = Label(self.frame_1,
-        #                                      text="File Explorer",
-        #                                      width=35, height=1,
-        #                                      fg="#FFFFFF", bg='#0E647B')
-        #     label_file_explorer.place(relx=0.70, rely=0.62)
-        #     # Change label contents
-        #     label_file_explorer.configure(text=filename,
-        #                                     fg="#FFFFFF", bg='#0E647B')
-        #     label_file_explorer.place(relx=0.69, rely=0.62)
         self.bt3 = Button(self.frame_1, text='Importar', command=self.browseFiles)
         self.bt3.place(relx=0.6, rely=0.62,
                        relwidth=0.08, relheight=0.085)
