@@ -1,24 +1,41 @@
 from tkinter import *
 from tkinter import ttk
-from tkinter import messagebox
+import re
+from random import randint
+import tkinter.scrolledtext as scrolledtext
 from tkinter import filedialog
 import json
+import serial 
+from time import sleep
+from tqdm import tqdm
 
 
 root = Tk()
 
-dic = {"opHack": {},
-       "dataNasc": "",
-       "PrimeirosNumCpf": "",
-       "numCel": "",
-       "numTel": "",
-       "cep": "",
-       "rg": "",
-       "numDigPass": "",
-       "numApto": "",
-       "velocExec": "",
-       "dadosImp": []}
+global filename
+filename = False
 
+# dic = {"opHack": {},
+#        "dataNasc": "",
+#        "PrimeirosNumCpf": "",
+#        "numCel": "",
+#        "numTel": "",
+#        "cep": "",
+#        "rg": "",
+#        "numDigPass": "",
+#        "numApto": "",
+#        "velocExec": "",
+#        "dadosImp": []}
+
+global dic
+dic = {}
+
+global serialcomm
+serialcomm = serial.Serial('COM4', 9600)
+serialcomm.timeout = 1
+
+global lista_dados_exp
+lista_dados_exp = []
 class App():
     def __init__(self):
         self.root = root
@@ -40,9 +57,10 @@ class App():
         self.frame_1 = Frame(self.root, bd=4, bg='#012C36',
                              highlightbackground='#04404E', highlightthickness=2)
         self.frame_1.place(relx=0.02 , rely=0.02, relwidth=0.96, relheight=0.46)
-        
+
     def browseFiles(self):
-        self.filename = filedialog.askopenfilename(initialdir="/",
+        global filename 
+        filename = filedialog.askopenfilename(initialdir="/",
                                                 title="Select a File",
                                                 filetypes=(("Text files",
                                                             "*.txt*"),
@@ -54,7 +72,7 @@ class App():
                                             fg="#FFFFFF", bg='#0E647B')
         label_file_explorer.place(relx=0.70, rely=0.62)
         # Change label contents
-        self.label_file_explorer.configure(text=self.filename,
+        self.label_file_explorer.configure(text=filename,
                                         fg="#FFFFFF", bg='#0E647B')
         self.label_file_explorer.place(relx=0.80, rely=0.62)
 
@@ -158,29 +176,50 @@ class App():
         self.veloc.place(relx=0.81, rely=0.5, width=25)
         self.veloc.bind("<Return>",
                         self.submit_entry_value)
-        
-        #label - explorador de arquivos
-        # label_file_explorer = Label(self.frame_1,
-        #                             text="File Explorer",
-        #                             width=35, height=1,
-        #                             fg="#FFFFFF", bg='#0E647B')
-        # label_file_explorer.place(relx=0.70, rely=0.62)
+
     var_checkbutton_fb = IntVar()
     var_checkbutton_dic = IntVar()
     def display_input_cb(self):
+        global dic
         dic['opHack'] = {'BruteForce': self.var_checkbutton_fb.get(),
                          'Dic': self.var_checkbutton_dic.get()}
         
     def file_save(self):
-        f = filedialog.asksaveasfile(mode='w', defaultextension=".json")
-        if f is None:  # asksaveasfile return `None` if dialog closed with "cancel".
-            return
-        text2save = str(self.txtBox.get(1.0, END))  # starts from `1.0`, not `0.0`
-        f.write(text2save)
-        f.close()
+        global dic
+        global lista_dados_exp
+        a = self.data_nasc.get()
+        b = self.tres_num_cpf.get()
+        c = self.num_cel.get()
+        d = self.num_tel.get()
+        e = self.cep.get()
+        f = self.rg.get()
+        g = self.num_alg_entry.get()
+        h = self.num_apto.get()
+        i = self.veloc.get()
+        dic["dataNasc"] = a
+        dic["PrimeirosNumCpf"] = b
+        dic["numCel"] = c
+        dic["numTel"] = d
+        dic["cep"] = e
+        dic["rg"] = f
+        dic["numDigPass"] = g
+        dic["numApto"] = h
+        dic["velocExec"] = i
+        global filename
+        if filename is not False:
+            with open(filename, 'r') as file:
+                for line in file:
+                    lista_dados_exp.append(line.replace('\n', ''))
+        dic["dadosExportados"] = lista_dados_exp
+        files = [('JSON File', '*.json')]
+        filepos = filedialog.asksaveasfile(filetypes=files, defaultextension=json, initialfile='IOTEDU')
+        json.dump(dic, filepos, indent=4)
     
+
         
     def submit_entry_value(self):
+        global dic
+        global serialcomm
         self.getEntry1 = self.data_nasc.get()
         self.getEntry2 = self.tres_num_cpf.get()
         self.getEntry3 = self.num_cel.get()
@@ -190,28 +229,75 @@ class App():
         self.getEntry7 = self.num_alg_entry.get()
         self.getEntry8 = self.num_apto.get()
         self.getEntry9 = self.veloc.get()
-        self.getEntry10 = self.veloc.get()
-        lista_ent_val = [{}, self.getEntry1, self.getEntry2, 
-                         self.getEntry3, self.getEntry4,
-                         self.getEntry5, self.getEntry6, 
-                         self.getEntry7, self.getEntry8, 
-                         self.getEntry9, ['senha1', 'senha2']]
+        dic["dataNasc"] = self.getEntry1
+        dic["PrimeirosNumCpf"] = self.getEntry2
+        dic["numCel"] = self.getEntry3
+        dic["numTel"] = self.getEntry4
+        dic["cep"] = self.getEntry5
+        dic["rg"] = self.getEntry6
+        dic["numDigPass"] = self.getEntry7
+        dic["numApto"] = self.getEntry8
+        dic["velocExec"] = self.getEntry9
+        global filename
+        if filename is not False:
+            with open(filename, 'r') as file:
+                for line in file:
+                    lista_dados_exp.append(line.replace('\n', ''))
+        dic["dadosExportados"] = lista_dados_exp
         
+        entradas = ''
+        not_digit = []
+        digit = []
+        lista = list(dic.values())
+        for value in lista:
+            if type(value) is str:
+                if not value.isdigit() and value != '':
+                    not_digit.append(value)
+                else:
+                    # TRATANDO DOS VALORES QUE SÃO PURAMENTE DIGITOS
+                    entradas = entradas + value+','
+            # TRATANDO DOS DADOS NO DICIONÁRIO QUE NÃO SÃO STRING
+            elif type(value) is list:
+                temp = value
+                for v in temp:
+                    entradas = entradas + v+','
+
+        for value in not_digit:
+            digit.append(re.sub('[^0-9]', ',', value))
+        for value in digit:
+            entradas = entradas + value+','
+
+        entradas = entradas.replace(',,', ',')
+        entradas = entradas[:-1]
+                # for i, (k, v) in enumerate(dic.items()):
+        #     if type(dic[k]) is list and type(lista_ent_val[i]) is list:
+        #         for el in lista_ent_val[i]:
+        #             dic[k].append(el)
+        #     else:
+        #         if type(dic[k]) is str and type(lista_ent_val[i]) is str:
+        #             dic[k] = lista_ent_val[i]
         
-        for i, (k, v) in enumerate(dic.items()):
-            if type(dic[k]) is list and type(lista_ent_val[i]) is list:
-                for el in lista_ent_val[i]:
-                    dic[k].append(el)
-            else:
-                if type(dic[k]) is str and type(lista_ent_val[i]) is str:
-                    dic[k] = lista_ent_val[i]
-                
-        self.txtBox.insert(INSERT, json.dumps(dic, indent=4))
-        
-    def elementos_frame_2(self):
-        ### TextBox
-        self.txtBox = Text(self.root , bd=4, bg='#000000', fg='#FFFFFF',
-                            highlightbackground='#04404E', highlightthickness=2)
-        self.txtBox.place(relx=0.02, rely=0.5, relwidth=0.96, relheight=0.46)
+        self.txtBox.insert(INSERT, "Enviando opara o Arduino...\n\n\n")
+        serialcomm.write(entradas.encode())
+        for i in range(5):
+            self.progress_bar['value'] += 20
+            # get the value
+            # update value
+            self.root.update_idletasks()
+            sleep(1)
+        self.lb.config(text='∞ ' + serialcomm.readline().decode('ascii'), font=('Cascadia Code', 8))
+        #self.txtBox.insert(INSERT, serialcomm.readline().decode('ascii'))
     
+    def elementos_frame_2(self):
+        ### Tex
+        self.txtBox = scrolledtext.ScrolledText(self.root, undo=True, bd=4, bg='#000000', fg='#FFFFFF',
+                                                highlightbackground='#04404E', highlightthickness=2)
+        self.txtBox['font'] = ('consolas', '12')
+        self.txtBox.place(relx=0.02, rely=0.5, relwidth=0.96, relheight=0.25)
+        self.lb = Label(self.root, fg="#FFFFFF", bg='#0E647B', bd=10,
+                        highlightbackground='#04404E', highlightthickness=2)
+        self.lb.place(relx=0.02, rely=0.77, relwidth=0.96, relheight=0.2)
+        self.progress_bar = ttk.Progressbar(
+            self.root, orient=HORIZONTAL, length=400, mode='determinate')
+        self.progress_bar.place(relx=0.02, rely=0.93, relwidth=0.96)
 App()
